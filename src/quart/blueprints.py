@@ -610,8 +610,8 @@ class Blueprint(Scaffold):
                 "Blueprints must have unique names"
             )
 
-        first_blueprint_registration = not any(
-            blueprint is self for blueprint in app.blueprints.values()
+        first_blueprint_registration = all(
+            blueprint is not self for blueprint in app.blueprints.values()
         )
         first_name_registration = name not in app.blueprints
 
@@ -622,7 +622,7 @@ class Blueprint(Scaffold):
 
         if self.has_static_folder:
             state.add_url_rule(
-                self.static_url_path + "/<path:filename>",
+                f"{self.static_url_path}/<path:filename>",
                 view_func=self.send_static_file,
                 endpoint="static",
             )
@@ -639,7 +639,7 @@ class Blueprint(Scaffold):
                 value = defaultdict(
                     dict,
                     {
-                        code: {exc_class: func for exc_class, func in code_values.items()}
+                        code: dict(code_values.items())
                         for code, code_values in value.items()
                     },
                 )
@@ -688,7 +688,7 @@ class Blueprint(Scaffold):
                 bp_subdomain = blueprint.subdomain
 
             if state.subdomain is not None and bp_subdomain is not None:
-                bp_options["subdomain"] = bp_subdomain + "." + state.subdomain
+                bp_options["subdomain"] = f"{bp_subdomain}.{state.subdomain}"
             elif bp_subdomain is not None:
                 bp_options["subdomain"] = bp_subdomain
             elif state.subdomain is not None:
@@ -747,7 +747,7 @@ class BlueprintSetupState:
         self.first_registration = first_registration
         self.subdomain = options.get("subdomain") or blueprint.subdomain
         self.url_defaults = dict(self.blueprint.url_values_defaults)
-        self.url_defaults.update(options.get("url_defaults", {}) or {})
+        self.url_defaults |= (options.get("url_defaults", {}) or {})
         self.name = self.options.get("name", blueprint.name)
         self.name_prefix = self.options.get("name_prefix", "")
 
