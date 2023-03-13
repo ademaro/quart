@@ -42,7 +42,7 @@ class TagDict(JSONTag):
 
     def to_json(self, value: Any) -> Dict[str, Any]:
         key = next(iter(value))
-        return {key + "__": self.serializer.tag(value[key])}
+        return {f"{key}__": self.serializer.tag(value[key])}
 
     def to_python(self, value: str) -> Dict[str, Any]:
         key, item = next(iter(value))  # type: ignore
@@ -179,11 +179,7 @@ class TaggedJSONSerializer:
             self.order.insert(index, tag)
 
     def tag(self, value: Any) -> Dict[str, Any]:
-        for tag in self.order:
-            if tag.check(value):
-                return tag.tag(value)
-
-        return value
+        return next((tag.tag(value) for tag in self.order if tag.check(value)), value)
 
     def untag(self, value: Dict[str, Any]) -> Any:
         if len(value) != 1:
@@ -191,10 +187,7 @@ class TaggedJSONSerializer:
 
         key = next(iter(value))
 
-        if key not in self.tags:
-            return value
-
-        return self.tags[key].to_python(value[key])
+        return value if key not in self.tags else self.tags[key].to_python(value[key])
 
     def dumps(self, value: Any) -> str:
         return dumps(self.tag(value), separators=(",", ":"))
