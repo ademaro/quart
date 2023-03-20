@@ -639,7 +639,7 @@ class Blueprint(Scaffold):
                 value = defaultdict(
                     dict,
                     {
-                        code: {exc_class: func for exc_class, func in code_values.items()}
+                        code: dict(code_values.items())
                         for code, code_values in value.items()
                     },
                 )
